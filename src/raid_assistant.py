@@ -20,7 +20,7 @@ class RaidAssistant(discord.ext.commands.Bot):
         raid_roles_per_user = defaultdict(list)
         for reaction in message.reactions:
 
-            if reaction.emoji not in ROLE_REACTIONS:
+            if str(reaction.emoji) not in ROLE_REACTIONS:
                 continue
 
             users = await reaction.users().flatten()
@@ -30,7 +30,7 @@ class RaidAssistant(discord.ext.commands.Bot):
                     continue
 
                 raid_roles_per_user[user.name] = raid_roles_per_user[user.name] + \
-                    [reaction.emoji]
+                    [str(reaction.emoji)]
 
         missing_player_id = 1
         while len(raid_roles_per_user) < SQUAD_LIMIT:

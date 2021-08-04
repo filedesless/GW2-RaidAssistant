@@ -13,18 +13,6 @@ class StaticRunEmbed(Embed):
 
     default_links = """
         [Raid Planner](https://docs.google.com/spreadsheets/d/1FGR_MssFo2wUA4SRLYke60NKhhZr21cW60XGS1rXzhw/)
-
-        TLDR:
-        \U0001f1e6 Tankbrand
-        \U0001f1e7 Spiritbeast/HK
-        \U0001f1e8 Alacren
-        \U0001f1e9 Banners
-        \U0001f1ea Scourge
-        \U0001f1eb Engi
-        \U0001f1ec Thief
-        \U0001f1ed Mesmer
-        \U0001f1ee Boon Heal Temp
-        \U0001f1ef Scourge
     """
 
     def __init__(self, raid, composition={}, player_roles={}):
