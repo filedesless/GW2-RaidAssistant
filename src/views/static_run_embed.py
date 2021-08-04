@@ -3,8 +3,8 @@ from discord import Color, Embed
 
 class StaticRunEmbed(Embed):
 
-    default_description = "HoT raid clear. React with the roles you wish to play"
-    default_time = "Daily Reset + 1"
+    default_description = "Static raid clear. React with the roles you wish to play"
+    default_time = "Tuesday & Thursday @ Daily Reset + 1"
     default_composition = "TBD"
 
     description_template = """
@@ -14,7 +14,19 @@ class StaticRunEmbed(Embed):
         {}
 
         **Links**
-        [Raid Planner](https://docs.google.com/spreadsheets/d/1ruJHWY-ZCgnk0CuEmeeBj7CmpJ6lHAcVGaV31xBjs9A/edit#gid=0)
+        [Raid Planner](https://docs.google.com/spreadsheets/d/1FGR_MssFo2wUA4SRLYke60NKhhZr21cW60XGS1rXzhw/edit#gid=1468951831)
+
+        **TLDR**
+        \U0001f1e6 Tankbrand
+        \U0001f1e7 Spiritbeast/HK
+        \U0001f1e8 Alacren
+        \U0001f1e9 Banners
+        \U0001f1ea Scourge
+        \U0001f1eb Engi
+        \U0001f1ec Thief
+        \U0001f1ed Mesmer
+        \U0001f1ee Boon Heal Temp
+        \U0001f1ef Scourge
 
         **Team Composition**
         {}
