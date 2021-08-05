@@ -42,7 +42,7 @@ class StaticRunEmbed(Embed):
 
     def add_composition_field(self, composition):
         if not composition:
-            self.add_field(name='Team Composition', value='TBD')
+            self.add_field(name='Team Composition', value='TBD', inline=True)
             return
 
         entries = []
@@ -53,7 +53,7 @@ class StaticRunEmbed(Embed):
             entries += ["{} {}".format(key, user)]
 
         formatted_composition = '\n'.join(sorted(entries))
-        self.add_field(name='Team Composition', value=formatted_composition)
+        self.add_field(name='Team Composition', value=formatted_composition, inline=True)
 
 
     def add_player_role_field(self, player_roles):
@@ -62,16 +62,8 @@ class StaticRunEmbed(Embed):
             self.add_field(name='\u200b', value='\u200b')
             return
 
-        player_names = []
-        formatted_player_roles = []
         for user, roles in player_roles.items():
             if "Missing player" in user:
                 continue
 
-            player_names += [user]
-            formatted_player_roles += ['\u200b'.join(roles)]
-
-        self.add_field(name='Player Roles', value='\n'.join(player_names))
-        for formatted_player_role in formatted_player_roles:
-            self.add_field(name='\u200b', value=formatted_player_role)
-
+            self.add_field(name=user, value='\u200b'.join(roles))
