@@ -72,5 +72,6 @@ class StaticRunEmbed(Embed):
             formatted_player_roles += ['\u200b'.join(roles)]
 
         self.add_field(name='Player Roles', value='\n'.join(player_names))
-        self.add_field(name='\u200b', value='\n'.join(formatted_player_roles))
+        for formatted_player_role in formatted_player_roles:
+            self.add_field(name='\u200b', value=formatted_player_role)
 
