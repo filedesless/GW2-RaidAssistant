@@ -33,8 +33,6 @@ class StaticRunEmbed(Embed):
     def set_as_calculating(self):
         self.set_field_at(self.TEAM_COMPOSITION_FIELD_INDEX, name='Team Composition',
                 value='Calculating...')
-        self.set_field_at(self.PLAYER_ROLE_USER_FIELD_INDEX, name='Player Roles', value='\u200b')
-        self.set_field_at(self.PLAYER_ROLE_VALUE_FIELD_INDEX, name='\u200b', value='\u200b')
 
     def set_as_failed(self):
         self.set_field_at(self.TEAM_COMPOSITION_FIELD_INDEX, name='Team Composition',
@@ -42,7 +40,7 @@ class StaticRunEmbed(Embed):
 
     def add_composition_field(self, composition):
         if not composition:
-            self.add_field(name='Team Composition', value='TBD', inline=True)
+            self.add_field(name='Team Composition', value='TBD', inline=False)
             return
 
         entries = []
@@ -53,13 +51,11 @@ class StaticRunEmbed(Embed):
             entries += ["{} {}".format(key, user)]
 
         formatted_composition = '\n'.join(sorted(entries))
-        self.add_field(name='Team Composition', value=formatted_composition, inline=True)
+        self.add_field(name='Team Composition', value=formatted_composition, inline=False)
 
 
     def add_player_role_field(self, player_roles):
         if not player_roles:
-            self.add_field(name='Player Roles', value='\u200b')
-            self.add_field(name='\u200b', value='\u200b')
             return
 
         for user, roles in player_roles.items():
