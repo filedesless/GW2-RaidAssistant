@@ -58,7 +58,8 @@ class StaticRunEmbed(Embed):
 
         formatted_composition = '\n'.join(sorted(entries))
         formatted_composition = "{}\n{} {}".format(formatted_composition, scourge_icon, ", ".join(scourges))
-        self.add_field(name='Team Composition', value=formatted_composition, inline=False)
+        n = len([ user for user in composition.keys() if "Missing player" not in user ])
+        self.add_field(name="Team Composition ({}/10)".format(n), value=formatted_composition, inline=False)
 
 
     def add_player_role_field(self, player_roles):
