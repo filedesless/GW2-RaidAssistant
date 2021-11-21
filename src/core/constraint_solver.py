@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from functools import reduce
+from typing import Dict, List
 import z3
 
 class ConstraintSolver:
@@ -23,12 +24,18 @@ class ConstraintSolver:
 
             q += 1
 
-    def __init__(self, keys, player_constraints):
+    """
+    ConstraintSolver ctor
+
+    keys: dict of how many times a given role can be chosen
+    player_constraints: dict of roles players have chosen
+    """
+    def __init__(self, keys: Dict[str, int], player_constraints: Dict[str, str]):
         g = self.gen_primes()
-        self.values_by_role = { key : next(g) for key in keys }
-        self.roles_by_value = { v: k for k, v in self.values_by_role.items() }
+        self.values_by_role: Dict[str, List[int]] = { role: [ next(g) for _ in range(count) ] for (role, count) in keys.items() }
+        self.roles_by_value: Dict[int, str] = { prime: role for role, primes in self.values_by_role.items() for prime in primes }
         self.players = player_constraints
-        self.solution = reduce(lambda x, y: x * y, self.values_by_role.values())
+        self.solution = reduce(lambda x, y: x * y, [ prime for primes in self.values_by_role.values() for prime in primes ])
 
     def get_solutions(self):
         solver = z3.Solver()
@@ -39,7 +46,7 @@ class ConstraintSolver:
 
             player_var = z3.Int(player)
             player_vars.append(player_var)
-            solver.add(z3.Or([player_var == self.values_by_role[role] for role in roles]))
+            solver.add(z3.Or([player_var == prime for role in roles for prime in self.values_by_role[role]]))
 
         # Set a constraint where each role must be used exactly once
         solver.add(z3.Distinct(player_vars))
@@ -54,7 +61,7 @@ class ConstraintSolver:
 
             model = solver.model()
 
-            yield { self.roles_by_value[model[d].as_long()] : str(d) for d in model.decls() }
+            yield { str(username) : self.roles_by_value[model[username].as_long()] for username in model.decls() }
 
             # Add the previous solution to the list of constraints
             solver.add(z3.Or([var != model[var] for var in player_vars]))

@@ -7,6 +7,7 @@ from core.constraint_solver import ConstraintSolver
 from core.constants import *
 from commands import create_raid, static_raid
 from models import *
+from typing import Dict
 
 
 class RaidAssistant(discord.ext.commands.Bot):
@@ -15,8 +16,8 @@ class RaidAssistant(discord.ext.commands.Bot):
 
     async def on_ready(self):
         print("Logged in as {}!".format(self.user))
-
-    async def get_user_raid_roles(self, message):
+    # returns players' chosen roles (username -> emoji)
+    async def get_user_raid_roles(self, message) -> Dict[str, str]:
         raid_roles_per_user = defaultdict(list)
         for reaction in message.reactions:
 
@@ -67,10 +68,11 @@ class RaidAssistant(discord.ext.commands.Bot):
         await message.edit(embed=new_embed)
 
         # Find a valid composition
-        raid_roles_per_user = await self.get_user_raid_roles(message)
-        solver = ConstraintSolver(ROLE_REACTIONS, raid_roles_per_user)
+        raid_roles_per_user: Dict[str, str] = await self.get_user_raid_roles(message)
+        solver = ConstraintSolver(COMPOSITION, raid_roles_per_user)
         solutions = solver.get_solutions()
         solution = next(solutions, None)
+        print("Found solution: ", solution)
 
         new_embed = StaticRunEmbed(curr_raid_info, solution, raid_roles_per_user)
         if not solution:

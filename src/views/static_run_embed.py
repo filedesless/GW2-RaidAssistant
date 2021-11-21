@@ -4,7 +4,7 @@ from discord import Color, Embed
 class StaticRunEmbed(Embed):
 
     default_description = "Static raid clear. React with the roles you wish to play"
-    default_time = "Tuesday & Thursday @ Daily Reset + 1"
+    default_time = "Tuesday & Thursday @ Daily Reset + 2"
     default_composition = "TBD"
 
     TEAM_COMPOSITION_FIELD_INDEX = 2
@@ -12,7 +12,7 @@ class StaticRunEmbed(Embed):
     PLAYER_ROLE_VALUE_FIELD_INDEX = 4
 
     default_links = """
-        [Raid Planner](https://docs.google.com/spreadsheets/d/1FGR_MssFo2wUA4SRLYke60NKhhZr21cW60XGS1rXzhw/)
+        [Raid Planner](https://github.com/afrigon/tlwk#readme)
     """
 
     def __init__(self, raid, composition={}, player_roles={}):
@@ -44,13 +44,20 @@ class StaticRunEmbed(Embed):
             return
 
         entries = []
-        for key, user in composition.items():
+        scourge_icon = ""
+        scourges = []
+        for user, role in composition.items():
             if "Missing player" in user:
                 user = ""
-
-            entries += ["{} {}".format(key, user)]
+            if "necro_scourge" in role:
+                scourge_icon = role
+                if len(user) > 0:
+                    scourges += [user]
+            else:
+                entries += ["{} {}".format(role, user)]
 
         formatted_composition = '\n'.join(sorted(entries))
+        formatted_composition = "{}\n{} {}".format(formatted_composition, scourge_icon, ", ".join(scourges))
         self.add_field(name='Team Composition', value=formatted_composition, inline=False)
 
 
