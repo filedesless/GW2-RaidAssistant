@@ -3,11 +3,11 @@ from discord import Emoji
 import os
 from collections import defaultdict
 from views.static_run_embed import StaticRunEmbed
-from core.constraint_solver import ConstraintSolver
+from core.constraint_solver import get_solution
 from core.constants import *
 from commands import create_raid, static_raid
 from models import *
-from typing import Dict
+from typing import Dict, List
 
 
 class RaidAssistant(discord.ext.commands.Bot):
@@ -16,8 +16,9 @@ class RaidAssistant(discord.ext.commands.Bot):
 
     async def on_ready(self):
         print("Logged in as {}!".format(self.user))
-    # returns players' chosen roles (username -> emoji)
-    async def get_user_raid_roles(self, message) -> Dict[str, str]:
+
+    # returns players' chosen roles (username -> [emoji])
+    async def get_user_raid_roles(self, message) -> Dict[str, List[str]]:
         raid_roles_per_user = defaultdict(list)
         for reaction in message.reactions:
 
@@ -32,12 +33,6 @@ class RaidAssistant(discord.ext.commands.Bot):
 
                 raid_roles_per_user[user.name] = raid_roles_per_user[user.name] + \
                     [str(reaction.emoji)]
-
-        missing_player_id = 1
-        while len(raid_roles_per_user) < SQUAD_LIMIT:
-            raid_roles_per_user["Missing player #{}".format(
-                missing_player_id)] = ROLE_REACTIONS
-            missing_player_id += 1
 
         return raid_roles_per_user
 
@@ -69,16 +64,15 @@ class RaidAssistant(discord.ext.commands.Bot):
 
         # Find a valid composition
         raid_roles_per_user: Dict[str, str] = await self.get_user_raid_roles(message)
-        solver = ConstraintSolver(COMPOSITION, raid_roles_per_user)
-        solutions = solver.get_solutions()
-        solution = next(solutions, None)
-        print("Found solution: ", solution)
-
-        new_embed = StaticRunEmbed(curr_raid_info, solution, raid_roles_per_user)
-        if not solution:
+        solution = get_solution(raid_roles_per_user)
+        if solution:
+            print("Found solution: ", solution)
+            new_embed = StaticRunEmbed(
+                curr_raid_info, solution, raid_roles_per_user)
+        else:
             new_embed.set_as_failed()
-        await message.edit(embed=new_embed)
 
+        await message.edit(embed=new_embed)
         curr_raid_info.save()
 
     async def wakeup(self, payload):

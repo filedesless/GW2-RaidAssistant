@@ -1,15 +1,20 @@
-SQUAD_LIMIT = 10
+EMOJI_SCOURGE = "<:necro_scourge:750067385448267846>"
+EMOJI_FIREBRAND = "<:guardian_firebrand:750067384173461527>"
+EMOJI_RENEGADE = "<:revenant_renegade:750067383628071012>"
+EMOJI_BERSERKER = "<:warrior_berserker:750067384706007120>"
+EMOJI_CHRONOMANCER = "<:mesmer_chronomancer:750067386207698965>"
+EMOJI_TEMPEST = "<:ele_tempest:750067384961991007>"
 
-COMPOSITION = {
-    "<:guardian_firebrand:750067384173461527>": 1,
-    "<:revenant_renegade:750067383628071012>": 1,
-    "<:warrior_berserker:750067384706007120>": 1,
-    "<:mesmer_chronomancer:750067386207698965>": 1,
-    "<:ele_tempest:750067384961991007>": 1,
-    "<:necro_scourge:750067385448267846>": 5
+VALUES_BY_ROLE = {
+    EMOJI_SCOURGE: [0, 1, 2, 3, 4],
+    EMOJI_FIREBRAND: [5],
+    EMOJI_RENEGADE: [6],
+    EMOJI_BERSERKER: [7],
+    EMOJI_CHRONOMANCER: [8],
+    EMOJI_TEMPEST: [9],
 }
 
-ROLE_REACTIONS = [ role for role in COMPOSITION.keys() ]
+ROLE_REACTIONS = [role for role in VALUES_BY_ROLE.keys()]
 
 SUBMIT_REACTION = "\U00002705"
 DEFAULT_REACTIONS = ROLE_REACTIONS + [SUBMIT_REACTION]

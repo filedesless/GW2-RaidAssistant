@@ -1,67 +1,42 @@
 #!/usr/bin/env python3
 
-from functools import reduce
-from typing import Dict, List
+from typing import Dict, List, Optional
+from core.constants import VALUES_BY_ROLE
 import z3
 
-class ConstraintSolver:
 
-    def gen_primes(self):
-        """ Generate an infinite sequence of prime numbers.
-            Taken from https://stackoverflow.com/questions/567222/simple-prime-number-generator-in-python
-        """
-        D = {}
-        q = 2
+def role_by_value(value: int) -> Optional[str]:
+    for role, values in VALUES_BY_ROLE.items():
+        if value in values:
+            return role
 
-        while True:
-            if q not in D:
-                yield q
-                D[q * q] = [q]
-            else:
-                for p in D[q]:
-                    D.setdefault(p + q, []).append(p)
-                del D[q]
 
-            q += 1
+def get_solution(players: Dict[str, List[str]]) -> Optional[Dict[str, str]]:
+    """Returns the optimal solution found {name: role} if any
 
+    Args: 
+        players: association of player names and roles they wish to play {name: [role]}
     """
-    ConstraintSolver ctor
+    solver = z3.Optimize()
+    player_vars = []
 
-    keys: dict of how many times a given role can be chosen
-    player_constraints: dict of roles players have chosen
-    """
-    def __init__(self, keys: Dict[str, int], player_constraints: Dict[str, str]):
-        g = self.gen_primes()
-        self.values_by_role: Dict[str, List[int]] = { role: [ next(g) for _ in range(count) ] for (role, count) in keys.items() }
-        self.roles_by_value: Dict[int, str] = { prime: role for role, primes in self.values_by_role.items() for prime in primes }
-        self.players = player_constraints
-        self.solution = reduce(lambda x, y: x * y, [ prime for primes in self.values_by_role.values() for prime in primes ])
+    # Set a constraint where each player can only play any of the roles they've specified
+    for name, roles in players.items():
+        # A player_var is a number in range(10) that represents the class a player will be playing
+        player_var = z3.Int(name)
+        solver.add(z3.And(player_var >= 0, player_var < 10))
+        player_vars.append(player_var)
+        solver.add(z3.Or(
+            [player_var == value for role in roles for value in VALUES_BY_ROLE[role]]))
 
-    def get_solutions(self):
-        solver = z3.Solver()
-        player_vars = []
+    # Set a constraint where each role must be used exactly once
+    solver.add(z3.Distinct(player_vars))
 
-        # Set a constraint where each player can only play roles they've specified
-        for player, roles in self.players.items():
+    # Optimize for the maximal sum of player_vars, so that classes with a higher value get filled in priority
+    solver.maximize(z3.Sum(player_vars))
 
-            player_var = z3.Int(player)
-            player_vars.append(player_var)
-            solver.add(z3.Or([player_var == prime for role in roles for prime in self.values_by_role[role]]))
-
-        # Set a constraint where each role must be used exactly once
-        solver.add(z3.Distinct(player_vars))
-        solver.add(reduce(lambda x, y: x * y, player_vars) == self.solution)
-
-        # Iterate over all solutions
-        while True:
-
-            if solver.check() == z3.unsat:
-                print("Could not find any more valid solutions for these constraints")
-                return
-
-            model = solver.model()
-
-            yield { str(username) : self.roles_by_value[model[username].as_long()] for username in model.decls() }
-
-            # Add the previous solution to the list of constraints
-            solver.add(z3.Or([var != model[var] for var in player_vars]))
+    # If a solution satisfying the given constraints is found, return it
+    if solver.check() == z3.sat:
+        model = solver.model()
+        return {str(name): role_by_value(model[name].as_long()) for name in model.decls()}
+    print("Could not find any solution")
