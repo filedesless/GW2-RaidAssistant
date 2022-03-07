@@ -1,4 +1,5 @@
 from discord import Color, Embed
+from core.constants import COMP
 
 
 class StaticRunEmbed(Embed):
@@ -11,8 +12,9 @@ class StaticRunEmbed(Embed):
     PLAYER_ROLE_USER_FIELD_INDEX = 3
     PLAYER_ROLE_VALUE_FIELD_INDEX = 4
 
-    default_links = """
-        [Raid Planner](https://github.com/afrigon/tlwk#readme)
+    default_links = f"""
+        {COMP}
+        Details [online](https://github.com/afrigon/tlwk#readme)
     """
 
     def __init__(self, raid, composition={}, player_roles={}):
@@ -24,19 +26,21 @@ class StaticRunEmbed(Embed):
 
         self.description = raid.description or self.default_description
 
-        self.add_field(name='Time', value=raid.time or self.default_time, inline=False)
-        self.add_field(name='Links', value=self.default_links, inline=False)
+        self.add_field(
+            name='Time', value=raid.time or self.default_time, inline=False)
+        self.add_field(name='Raid comp',
+                       value=self.default_links, inline=False)
 
         self.add_composition_field(composition)
         self.add_player_role_field(player_roles)
 
     def set_as_calculating(self):
         self.set_field_at(self.TEAM_COMPOSITION_FIELD_INDEX, name='Team Composition',
-                value='Calculating...')
+                          value='Calculating...')
 
     def set_as_failed(self):
         self.set_field_at(self.TEAM_COMPOSITION_FIELD_INDEX, name='Team Composition',
-                value='Failed. Could not generate a team composition.')
+                          value='Failed. Could not generate a team composition.')
 
     def add_composition_field(self, composition):
         if not composition:
@@ -57,10 +61,12 @@ class StaticRunEmbed(Embed):
                 entries += ["{} {}".format(role, user)]
 
         formatted_composition = '\n'.join(sorted(entries))
-        formatted_composition = "{}\n{} {}".format(formatted_composition, scourge_icon, ", ".join(scourges))
-        n = len([ user for user in composition.keys() if "Missing player" not in user ])
-        self.add_field(name="Team Composition ({}/10)".format(n), value=formatted_composition, inline=False)
-
+        formatted_composition = "{}\n{} {}".format(
+            formatted_composition, scourge_icon, ", ".join(scourges))
+        n = len([user for user in composition.keys()
+                if "Missing player" not in user])
+        self.add_field(name="Team Composition ({}/10)".format(n),
+                       value=formatted_composition, inline=False)
 
     def add_player_role_field(self, player_roles):
         if not player_roles:
