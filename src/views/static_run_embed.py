@@ -14,7 +14,7 @@ class StaticRunEmbed(Embed):
 
     default_links = f"""
         {COMP}
-        Details [online](https://github.com/afrigon/tlwk#readme)
+        [more info](https://github.com/afrigon/tlwk#readme)
     """
 
     def __init__(self, raid, composition={}, player_roles={}):
