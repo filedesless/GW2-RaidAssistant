@@ -1,3 +1,4 @@
+import datetime
 from discord import Color, Embed
 from core.constants import COMP
 
@@ -5,7 +6,6 @@ from core.constants import COMP
 class StaticRunEmbed(Embed):
 
     default_description = "Static raid clear. React with the roles you wish to play"
-    default_time = "Tuesday & Thursday @ Daily Reset + 2"
     default_composition = "TBD"
 
     TEAM_COMPOSITION_FIELD_INDEX = 2
@@ -27,12 +27,24 @@ class StaticRunEmbed(Embed):
         self.description = raid.description or self.default_description
 
         self.add_field(
-            name='Time', value=raid.time or self.default_time, inline=False)
+            name='Time (reset + 1)', value=raid.time or self.get_default_time(), inline=False)
         self.add_field(name='Raid comp',
                        value=self.default_links, inline=False)
 
         self.add_composition_field(composition)
         self.add_player_role_field(player_roles)
+
+    def get_default_time(self) -> str:
+        today = datetime.date.today()
+        # daily reset + 1h
+        t = datetime.time(hour=1, tzinfo=datetime.timezone.utc)
+        for i in range(7):
+            day = today + datetime.timedelta(days=i)
+            if day.weekday() == 1:  # tuesday
+                tuesday = int(datetime.datetime.combine(day, t).timestamp())
+            if day.weekday() == 3:  # Thursday
+                thursday = int(datetime.datetime.combine(day, t).timestamp())
+        return f'<t:{tuesday}:F>\n<t:{thursday}:F>'
 
     def set_as_calculating(self):
         self.set_field_at(self.TEAM_COMPOSITION_FIELD_INDEX, name='Team Composition',
