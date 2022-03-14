@@ -40,7 +40,6 @@ class StaticRunEmbed(Embed):
         t = datetime.time(hour=1, tzinfo=datetime.timezone.utc)
         for i in range(7):
             day = today + datetime.timedelta(days=i)
-            print(day, day.weekday())
             if day.weekday() == 2:  # tuesday
                 tuesday = int(datetime.datetime.combine(day, t).timestamp())
                 day = day + datetime.timedelta(days=2)
