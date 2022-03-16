@@ -97,6 +97,18 @@ if __name__ == '__main__':
     BaseModel._meta.database.create_tables([Raid])
 
     bot = RaidAssistant(command_prefix='!raid ')
+
+    @bot.event
+    async def on_message(message):
+        print(message.author.name)
+        if message.author == bot.user:
+            return
+        if message.author.display_name == "Zommoros":
+            if "A new Arcdps version is available." in message.content:
+                await message.channel.send('good bot')
+            if "Do not forget your daily mystic forger today!" in message.content:
+                await message.channel.send('good bot')
+
     bot.add_command(static_raid)
     bot.add_command(create_raid)
     bot.run(os.environ['DISCORD_BOT_TOKEN'])
