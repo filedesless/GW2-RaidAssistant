@@ -90,6 +90,16 @@ class RaidAssistant(discord.ext.commands.Bot):
 
         await channel.send("{} wake up buttercup(s) we're raiding".format(", ".join(users)))
 
+    async def on_message(self, message):
+        print("message from ", message.author)
+        if message.author.display_name == "Zommoros":
+            if "A new Arcdps version is available." in message.content:
+                await message.channel.send('good bot')
+            if "Do not forget your daily mystic forger today!" in message.content:
+                await message.channel.send('good bot')
+
+        await bot.process_commands(message)
+
 
 if __name__ == '__main__':
 
@@ -97,17 +107,6 @@ if __name__ == '__main__':
     BaseModel._meta.database.create_tables([Raid])
 
     bot = RaidAssistant(command_prefix='!raid ')
-
-    @bot.event
-    async def on_message(message):
-        print(message.author.name)
-        if message.author == bot.user:
-            return
-        if message.author.display_name == "Zommoros":
-            if "A new Arcdps version is available." in message.content:
-                await message.channel.send('good bot')
-            if "Do not forget your daily mystic forger today!" in message.content:
-                await message.channel.send('good bot')
 
     bot.add_command(static_raid)
     bot.add_command(create_raid)
