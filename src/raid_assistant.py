@@ -75,7 +75,7 @@ class RaidAssistant(discord.ext.commands.Bot):
 
 if __name__ == '__main__':
     # Initialize database
-    BaseModel.create_table(Raid)
+    BaseModel._meta.database.create_tables([Raid])
 
     intents = discord.Intents.default()
     intents.message_content = True
