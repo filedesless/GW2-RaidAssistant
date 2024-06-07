@@ -1,4 +1,4 @@
-from python:3.9.1-slim
+from python
 
 RUN mkdir /app
 COPY requirements.txt /app/requirements.txt

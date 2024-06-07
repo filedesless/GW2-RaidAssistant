@@ -1,13 +1,14 @@
-import discord
-from discord import Emoji
 import os
 from collections import defaultdict
-from views.static_run_embed import StaticRunEmbed
-from core.constraint_solver import get_solution
-from core.constants import *
-from commands import create_raid, static_raid
-from models import *
 from typing import Dict, List
+
+import discord
+
+from commands import create_raid
+from core.constants import *
+from core.constraint_solver import get_solution
+from models import *
+from views.raid_embed import RaidEmbed
 
 
 class RaidAssistant(discord.ext.commands.Bot):
@@ -15,24 +16,20 @@ class RaidAssistant(discord.ext.commands.Bot):
     raid_messages = {}
 
     async def on_ready(self):
-        print("Logged in as {}!".format(self.user))
+        print(f"Logged in as {self.user}!")
 
     # returns players' chosen roles (username -> [emoji])
     async def get_user_raid_roles(self, message) -> Dict[str, List[str]]:
         raid_roles_per_user = defaultdict(list)
         for reaction in message.reactions:
-
             if str(reaction.emoji) not in ROLE_REACTIONS:
                 continue
 
-            users = await reaction.users().flatten()
-            for user in users:
-
+            async for user in reaction.users():
                 if user.id == self.user.id:
                     continue
 
-                raid_roles_per_user[user.name] = raid_roles_per_user[user.name] + \
-                    [str(reaction.emoji)]
+                raid_roles_per_user[user.name] += [str(reaction.emoji)]
 
         return raid_roles_per_user
 
@@ -58,7 +55,7 @@ class RaidAssistant(discord.ext.commands.Bot):
         curr_raid_info = Raid.get_or_none(Raid.message_id == message.id)
 
         # Intermediate loading message
-        new_embed = StaticRunEmbed(curr_raid_info)
+        new_embed = RaidEmbed(curr_raid_info)
         new_embed.set_as_calculating()
         await message.edit(embed=new_embed)
 
@@ -67,7 +64,7 @@ class RaidAssistant(discord.ext.commands.Bot):
         solution = get_solution(raid_roles_per_user)
         if solution:
             print("Found solution: ", solution)
-            new_embed = StaticRunEmbed(
+            new_embed = RaidEmbed(
                 curr_raid_info, solution, raid_roles_per_user)
         else:
             new_embed.set_as_failed()
@@ -75,39 +72,14 @@ class RaidAssistant(discord.ext.commands.Bot):
         await message.edit(embed=new_embed)
         curr_raid_info.save()
 
-    async def wakeup(self, payload):
-        channel = await self.fetch_channel(payload.channel_id)
-        message: discord.Message = await channel.fetch_message(payload.message_id)
-        users = set()
-        for reaction in message.reactions:
-            emoji = reaction.emoji
-            custom = isinstance(emoji, Emoji) and emoji.name == "headcount"
-            is_raised_hands = emoji == RAISED_HANDS
-            if custom or is_raised_hands:
-                async for user in reaction.users():
-                    if user.id != self.user.id:
-                        users.add(user.mention)
-
-        await channel.send("{} wake up buttercup(s) we're raiding".format(", ".join(users)))
-
-    async def on_message(self, message):
-        print("message from ", message.author)
-        if message.author.display_name == "Zommoros":
-            if "A new Arcdps version is available." in message.content:
-                await message.channel.send('good bot')
-            if "Do not forget your daily mystic forger today!" in message.content:
-                await message.channel.send('good bot')
-
-        await bot.process_commands(message)
-
 
 if __name__ == '__main__':
-
     # Initialize database
-    BaseModel._meta.database.create_tables([Raid])
+    BaseModel.create_table(Raid)
 
-    bot = RaidAssistant(command_prefix='!raid ')
+    intents = discord.Intents.default()
+    intents.message_content = True
+    bot = RaidAssistant(command_prefix='!raid ', intents=intents)
 
-    bot.add_command(static_raid)
     bot.add_command(create_raid)
     bot.run(os.environ['DISCORD_BOT_TOKEN'])
