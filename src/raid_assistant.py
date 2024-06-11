@@ -1,26 +1,24 @@
 import os
 from collections import defaultdict
-from typing import Dict, List
 
 import discord
+from discord.ext import commands
 
-from commands import create_raid
-from core.constants import *
+from core.constants import DEFAULT_REACTIONS, ROLE_REACTIONS
 from core.constraint_solver import get_solution
-from models import *
 from views.raid_embed import RaidEmbed
+
+# msg_id -> (username -> [emoji])
+STATE: dict[int, dict[str, set[str]]] = {}
 
 
 class RaidAssistant(discord.ext.commands.Bot):
 
-    raid_messages = {}
+    async def get_roles_per_user(self, payload: discord.RawReactionActionEvent):
+        channel = await self.fetch_channel(payload.channel_id)
+        message = await channel.fetch_message(payload.message_id)
 
-    async def on_ready(self):
-        print(f"Logged in as {self.user}!")
-
-    # returns players' chosen roles (username -> [emoji])
-    async def get_user_raid_roles(self, message) -> Dict[str, List[str]]:
-        raid_roles_per_user = defaultdict(list)
+        raid_roles_per_user = defaultdict(set)
         for reaction in message.reactions:
             if str(reaction.emoji) not in ROLE_REACTIONS:
                 continue
@@ -28,58 +26,74 @@ class RaidAssistant(discord.ext.commands.Bot):
             async for user in reaction.users():
                 if user.id == self.user.id:
                     continue
-
-                raid_roles_per_user[user.name] += [str(reaction.emoji)]
-
+                raid_roles_per_user[user.name].add(str(reaction.emoji))
+        print("got roles", raid_roles_per_user)
         return raid_roles_per_user
 
-    async def on_raw_reaction_add(self, payload):
+    async def on_ready(self):
+        print(f"Logged in as {self.user}!")
 
+    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
         if payload.user_id == self.user.id:
             return
-
-        raid: Raid = Raid.get_or_none(Raid.message_id == payload.message_id)
-        if not raid:
-            return
-
-        if raid.static:
-            if payload.emoji.name == SUBMIT_REACTION:
-                await self.find_composition(payload)
-        else:
-            if payload.emoji.name == ALARM_CLOCK and raid.organiser_id == str(payload.user_id):
-                await self.wakeup(payload)
-
-    async def find_composition(self, payload):
         channel = await self.fetch_channel(payload.channel_id)
         message = await channel.fetch_message(payload.message_id)
-        curr_raid_info = Raid.get_or_none(Raid.message_id == message.id)
+        if message.author.id != self.user.id:
+            return
+        if not payload.message_id in STATE:
+            STATE[payload.message_id] = await self.get_roles_per_user(payload)
+        else:
+            STATE[payload.message_id][payload.member.name].add(
+                str(payload.emoji))
+        if len(STATE[payload.message_id]) <= 10:
+            await self.find_composition(message)
 
-        # Intermediate loading message
-        new_embed = RaidEmbed(curr_raid_info)
-        new_embed.set_as_calculating()
-        await message.edit(embed=new_embed)
+    async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent):
+        if payload.user_id == self.user.id:
+            return
+        channel = await self.fetch_channel(payload.channel_id)
+        message = await channel.fetch_message(payload.message_id)
+        if message.author.id != self.user.id:
+            return
+        if not payload.message_id in STATE:
+            STATE[payload.message_id] = await self.get_roles_per_user(payload)
+        user = await self.fetch_user(payload.user_id)
+        if str(payload.emoji) in STATE[payload.message_id][user.name]:
+            STATE[payload.message_id][user.name].remove(str(payload.emoji))
+            if not STATE[payload.message_id][user.name]:
+                del STATE[payload.message_id][user.name]
+            if len(STATE[payload.message_id]) <= 10:
+                await self.find_composition(message)
 
+    async def find_composition(self, message: discord.Message):
         # Find a valid composition
-        raid_roles_per_user: Dict[str, str] = await self.get_user_raid_roles(message)
-        solution = get_solution(raid_roles_per_user)
+        embed = message.embeds[0]
+        new_embed = RaidEmbed(embed.description, embed.fields[0].value)
+        solution = get_solution(STATE[message.id])
+        print("Found solution: ", solution)
         if solution:
-            print("Found solution: ", solution)
-            new_embed = RaidEmbed(
-                curr_raid_info, solution, raid_roles_per_user)
+            new_embed.set_team_comp(solution, STATE[message.id])
         else:
             new_embed.set_as_failed()
 
         await message.edit(embed=new_embed)
-        curr_raid_info.save()
 
+
+@commands.command(name='create')
+async def create_raid(ctx, description=None, time=None):
+    embed = RaidEmbed(description, time)
+    message = await ctx.send("", embed=embed)
+
+    STATE[message.id] = defaultdict(set)
+
+    for emoji in DEFAULT_REACTIONS:
+        await message.add_reaction(emoji)
 
 if __name__ == '__main__':
     # Initialize database
-    BaseModel._meta.database.create_tables([Raid])
-
     intents = discord.Intents.default()
     intents.message_content = True
-    bot = RaidAssistant(command_prefix='!raid ', intents=intents)
+    bot = RaidAssistant(command_prefix='!raid', intents=intents)
 
     bot.add_command(create_raid)
     bot.run(os.environ['DISCORD_BOT_TOKEN'])
