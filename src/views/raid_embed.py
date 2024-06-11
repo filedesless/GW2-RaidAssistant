@@ -20,7 +20,6 @@ class RaidEmbed(Embed):
         self.description = description or "Raid signup. React with the roles you wish to play"
 
         event_time = event_time or f'<t:{int(get_next_time(day=MON, minute=30).timestamp())}:F>'
-        print(event_time)
         self.add_field(name='Time', value=event_time, inline=False)
         self.add_field(name='Raid comp', value=COMP, inline=False)
         self.add_field(name='Team Composition', value='TBD', inline=False)
