@@ -1,13 +1,16 @@
-import datetime
+from datetime import UTC, datetime, timedelta, time
 from discord import Color, Embed
 from core.constants import COMP, ROLE_REACTIONS
+
+
+MON, TUE, WED, THU, FRI, SAT, SUN = range(7)
 
 
 class RaidEmbed(Embed):
 
     TEAM_COMPOSITION_FIELD_INDEX = 2
 
-    def __init__(self, description: str | None = None, time: str | None = None):
+    def __init__(self, description: str | None = None, event_time: str | None = None):
         super().__init__()
 
         self.title = "R A I D S"
@@ -16,8 +19,9 @@ class RaidEmbed(Embed):
 
         self.description = description or "Raid signup. React with the roles you wish to play"
 
-        time = time or self.get_default_time()
-        self.add_field(name='Time', value=time, inline=False)
+        event_time = event_time or f'<t:{int(get_next_time(day=MON, minute=30).timestamp())}:F>'
+        print(event_time)
+        self.add_field(name='Time', value=event_time, inline=False)
         self.add_field(name='Raid comp', value=COMP, inline=False)
         self.add_field(name='Team Composition', value='TBD', inline=False)
 
@@ -31,17 +35,17 @@ class RaidEmbed(Embed):
             self.add_field(name=user, value='\u200b'.join(
                 role for role in ROLE_REACTIONS if role in roles))
 
-    def get_default_time(self) -> str:
-        today = datetime.date.today()
-        # daily reset + 30m
-        t = datetime.time(minute=30, tzinfo=datetime.timezone.utc)
-        for i in range(7):
-            day = today + datetime.timedelta(days=i)
-            if day.weekday() == 0:  # monday
-                monday = int(datetime.datetime.combine(day, t).timestamp())
-                break
-        return f'<t:{monday}:F>'
-
     def set_as_failed(self):
         self.set_field_at(self.TEAM_COMPOSITION_FIELD_INDEX, name='Team Composition',
                           value='Failed. Could not generate a team composition.')
+
+
+def get_next_time(day: int = SUN, hour: int = 0, minute: int = 0) -> datetime:
+    """Finds next time day reset + hour:min occurs"""
+    now = datetime.now(UTC)
+    t = time(hour=hour, minute=minute, tzinfo=UTC)
+    for i in range(8):
+        tt = datetime.combine(now.date() + timedelta(days=i), t)
+        # check next day since after reset
+        if now < tt and tt.weekday() == (day + 1) % 7:
+            return tt

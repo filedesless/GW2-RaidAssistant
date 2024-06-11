@@ -1,8 +1,8 @@
-#!/usr/bin/env python3
+"""Constraint solving module"""
 
 from collections import OrderedDict
-from core.constants import ROLE_REACTIONS
 import z3
+from core.constants import ROLE_REACTIONS
 
 
 def get_solution(players: OrderedDict[str, set[str]]) -> dict[str, str] | None:
@@ -21,9 +21,10 @@ def get_solution(players: OrderedDict[str, set[str]]) -> dict[str, str] | None:
     for name, roles in players.items():
         # A player_var is an integer that represents the role a player will be playing
         player_var = z3.Int(name)
-        solver.add(z3.And(player_var >= 0, player_var < len(ROLES) + 1))
+        solver.add(z3.And(player_var >= 0, player_var < len(ROLES)))
         player_vars.append(player_var)
-        solver.add(z3.Or([player_var == ROLES.index(role) for role in roles | {":clown:"}]))
+        solver.add(z3.Or([player_var == ROLES.index(role)
+                   for role in roles | {":clown:"}]))
 
     # at most 2 heal
     solver.add(z3.AtMost(*[z3.Or(var == 0, var == 2)
