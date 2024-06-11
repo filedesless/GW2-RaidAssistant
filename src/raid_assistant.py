@@ -93,7 +93,7 @@ if __name__ == '__main__':
     # Initialize database
     intents = discord.Intents.default()
     intents.message_content = True
-    bot = RaidAssistant(command_prefix='!raid', intents=intents)
+    bot = RaidAssistant(command_prefix='$', intents=intents)
 
     bot.add_command(create_raid)
     bot.run(os.environ['DISCORD_BOT_TOKEN'])

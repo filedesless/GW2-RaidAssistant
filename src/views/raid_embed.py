@@ -33,8 +33,8 @@ class RaidEmbed(Embed):
 
     def get_default_time(self) -> str:
         today = datetime.date.today()
-        # daily reset + 1h
-        t = datetime.time(hour=1, tzinfo=datetime.timezone.utc)
+        # daily reset + 30m
+        t = datetime.time(minute=30, tzinfo=datetime.timezone.utc)
         for i in range(7):
             day = today + datetime.timedelta(days=i)
             if day.weekday() == 1:  # monday
