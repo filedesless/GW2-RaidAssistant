@@ -37,7 +37,7 @@ class RaidEmbed(Embed):
         t = datetime.time(minute=30, tzinfo=datetime.timezone.utc)
         for i in range(7):
             day = today + datetime.timedelta(days=i)
-            if day.weekday() == 1:  # monday
+            if day.weekday() == 0:  # monday
                 monday = int(datetime.datetime.combine(day, t).timestamp())
                 break
         return f'<t:{monday}:F>'
