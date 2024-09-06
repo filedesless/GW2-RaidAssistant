@@ -16,9 +16,11 @@ def get_solution(players: OrderedDict[str, set[str]]) -> dict[str, str] | None:
     player_vars = []
 
     ROLES = ROLE_REACTIONS + [":clown:"]
+    print(ROLES)
 
     # Set a constraint where each player can only play any of the roles they've specified
     for name, roles in players.items():
+        print(name, roles)
         # A player_var is an integer that represents the role a player will be playing
         player_var = z3.Int(name)
         solver.add(z3.And(player_var >= 0, player_var < len(ROLES)))

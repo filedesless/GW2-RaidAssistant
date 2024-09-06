@@ -4,7 +4,7 @@ from collections import OrderedDict
 import discord
 from discord.ext import commands
 
-from core.constants import DEFAULT_REACTIONS, ROLE_REACTIONS, EMOJI_CLOCK
+from core.constants import *
 from core.constraint_solver import get_solution
 from views.raid_embed import RaidEmbed
 
@@ -42,7 +42,7 @@ class RaidAssistant(commands.Bot):
         message = await channel.fetch_message(payload.message_id)
         if message.author.id != self.user.id:
             return
-        emoji = str(payload.emoji)
+        emoji = payload.emoji.name
         user = payload.member
         if not message.id in STATE:
             STATE[message.id] = await self.get_roles_per_user(payload)
@@ -65,7 +65,7 @@ class RaidAssistant(commands.Bot):
         if not payload.message_id in STATE:
             STATE[message.id] = await self.get_roles_per_user(payload)
         user = await self.fetch_user(payload.user_id)
-        emoji = str(payload.emoji)
+        emoji = payload.emoji.name
         if emoji in ROLE_REACTIONS:
             if user.id in STATE[message.id] and emoji in STATE[message.id][user.id][1]:
                 STATE[payload.message_id][user.id][1].remove(emoji)
@@ -78,10 +78,15 @@ class RaidAssistant(commands.Bot):
         embed = message.embeds[0]
         new_embed = RaidEmbed(embed.description, embed.fields[0].value)
         player_roles = OrderedDict(STATE[message.id].values())
+        print("player roles:", player_roles)
         if player_roles:
             solution = get_solution(player_roles)
             print("Found solution: ", solution)
+            solution = { user: str(discord.utils.get(message.guild.emojis, name=solution[user])) for user in solution}
+            print("fixed solution: ", solution)
             if solution:
+                player_roles = {player: {str(discord.utils.get(message.guild.emojis, name=name) if name in CUSTOM_REACTIONS else name) for name in player_roles[player]} for player in player_roles}
+                print("fixed player roles", player_roles)
                 new_embed.set_team_comp(solution, player_roles)
             else:
                 new_embed.set_as_failed()
@@ -96,8 +101,12 @@ async def create_raid(ctx, description=None, time=None):
 
     STATE[message.id] = OrderedDict()
 
-    for emoji in DEFAULT_REACTIONS:
-        await message.add_reaction(emoji)
+    for name in CUSTOM_REACTIONS:
+        print(name)
+        emoji = discord.utils.get(ctx.guild.emojis, name=name)
+        print(emoji)
+        await message.add_reaction(str(emoji))
+    await message.add_reaction(EMOJI_DPS)
     await message.add_reaction(EMOJI_CLOCK)
 
 if __name__ == '__main__':
