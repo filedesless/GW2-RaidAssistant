@@ -24,7 +24,7 @@ class RaidEmbed(Embed):
         self.add_field(name='Raid comp', value=COMP, inline=False)
         self.add_field(name='Team Composition', value='TBD', inline=False)
 
-    def set_team_comp(self, composition: dict[str, str], player_roles: dict[str, list[str]]):
+    def set_team_comp(self, composition: dict[str, str], player_roles: dict[str, set[str]]):
         entries = [f"{role} {user}" for (user, role) in composition.items()]
         formatted_composition = '\n'.join(sorted(entries))
         self.set_field_at(self.TEAM_COMPOSITION_FIELD_INDEX,
@@ -42,9 +42,10 @@ class RaidEmbed(Embed):
 def get_next_time(day: int = SUN, hour: int = 0, minute: int = 0) -> datetime:
     """Finds next time day reset + hour:min occurs"""
     now = datetime.now(UTC)
-    t = time(hour=hour, minute=minute, tzinfo=UTC)
-    for i in range(8):
-        tt = datetime.combine(now.date() + timedelta(days=i), t)
+    current = datetime.combine(now.date(), time(hour=hour, minute=minute, tzinfo=UTC))
+    for _ in range(8):
+        current += timedelta(days=1)
         # check next day since after reset
-        if now < tt and tt.weekday() == (day + 1) % 7:
-            return tt
+        if now < current and current.weekday() == (day + 1) % 7:
+            break
+    return current

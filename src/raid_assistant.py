@@ -9,9 +9,9 @@ from core.constraint_solver import get_solution
 from views.raid_embed import RaidEmbed
 
 # msg_id -> (int -> (name, {emoji}))
-STATE: dict[int, OrderedDict[int, (str, set[str])]] = {}
+STATE: dict[int, OrderedDict[int, tuple[str, set[str]]]] = {}
 
-class RaidAssistant(discord.ext.commands.Bot):
+class RaidAssistant(commands.Bot):
 
     async def get_roles_per_user(self, payload: discord.RawReactionActionEvent):
         """Fetch discord for the reactions of a non-cached message"""
@@ -26,7 +26,7 @@ class RaidAssistant(discord.ext.commands.Bot):
                 continue
 
             async for user in reaction.users():
-                if user.id == self.user.id:
+                if not self.user or user.id == self.user.id:
                     continue
                 raid_roles_per_user.setdefault(user.id, (user.name, set()))[1].add(emoji)
         print("got roles", raid_roles_per_user)
@@ -36,7 +36,7 @@ class RaidAssistant(discord.ext.commands.Bot):
         print(f"Logged in as {self.user}!")
 
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
-        if payload.user_id == self.user.id:
+        if not self.user or not payload.member or payload.user_id == self.user.id:
             return
         channel = await self.fetch_channel(payload.channel_id)
         message = await channel.fetch_message(payload.message_id)
@@ -56,7 +56,7 @@ class RaidAssistant(discord.ext.commands.Bot):
             await channel.send(f"{source}: wake up buttercups we raidin {mentions}")
 
     async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent):
-        if payload.user_id == self.user.id:
+        if not self.user or payload.user_id == self.user.id:
             return
         channel = await self.fetch_channel(payload.channel_id)
         message = await channel.fetch_message(payload.message_id)
