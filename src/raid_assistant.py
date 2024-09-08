@@ -82,7 +82,7 @@ class RaidAssistant(commands.Bot):
         if player_roles:
             solution = get_solution(player_roles)
             print("Found solution: ", solution)
-            solution = { user: str(discord.utils.get(message.guild.emojis, name=solution[user])) for user in solution}
+            solution = { user: str(discord.utils.get(message.guild.emojis, name=name)) if name in CUSTOM_REACTIONS else name for (user, name) in solution.items()}
             print("fixed solution: ", solution)
             if solution:
                 player_roles = {player: {str(discord.utils.get(message.guild.emojis, name=name) if name in CUSTOM_REACTIONS else name) for name in player_roles[player]} for player in player_roles}
